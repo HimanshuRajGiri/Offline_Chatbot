@@ -1,0 +1,467 @@
+
+
+Index · HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Local Chat — Phi-3</title>
+<style>
+  :root {
+    --ink: #1b1d1f;
+    --paper: #eef0ec;
+    --panel: #ffffff;
+    --moss: #3c5a45;
+    --moss-dark: #2b4232;
+    --line: #d4d8d0;
+    --muted: #6b7269;
+    --bubble-user: #dfe6da;
+  }
+ 
+  * { box-sizing: border-box; }
+ 
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+ 
+  header {
+    padding: 18px 28px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+ 
+  header .title {
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+  }
+ 
+  header .title span {
+    color: var(--muted);
+    font-weight: 400;
+    font-size: 13px;
+    display: block;
+    margin-top: 2px;
+  }
+ 
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+ 
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--moss);
+  }
+ 
+  main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 760px;
+    width: 100%;
+    margin: 0 auto;
+  }
+ 
+  .empty {
+    margin: auto;
+    text-align: center;
+    color: var(--muted);
+    max-width: 340px;
+  }
+ 
+  .empty h2 {
+    color: var(--ink);
+    font-size: 19px;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+ 
+  .empty p {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+ 
+  .msg {
+    display: flex;
+    flex-direction: column;
+    max-width: 78%;
+  }
+ 
+  .msg.user { align-self: flex-end; align-items: flex-end; }
+  .msg.bot { align-self: flex-start; align-items: flex-start; }
+ 
+  .bubble {
+    padding: 11px 15px;
+    border-radius: 14px;
+    font-size: 14.5px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+ 
+  .msg.user .bubble {
+    background: var(--bubble-user);
+    border-bottom-right-radius: 4px;
+  }
+ 
+  .msg.bot .bubble {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-bottom-left-radius: 4px;
+  }
+ 
+  .msg img.attached {
+    max-width: 220px;
+    max-height: 220px;
+    border-radius: 10px;
+    margin-bottom: 6px;
+    border: 1px solid var(--line);
+  }
+ 
+  .label {
+    font-size: 11px;
+    color: var(--muted);
+    margin: 0 4px 4px;
+  }
+ 
+  .typing {
+    display: flex;
+    gap: 4px;
+    padding: 4px 2px;
+  }
+ 
+  .typing span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--muted);
+    animation: bounce 1.2s infinite ease-in-out;
+  }
+ 
+  .typing span:nth-child(2) { animation-delay: 0.15s; }
+  .typing span:nth-child(3) { animation-delay: 0.3s; }
+ 
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+    30% { transform: translateY(-4px); opacity: 1; }
+  }
+ 
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 14px 28px 20px;
+  }
+ 
+  #imagePreview {
+    max-width: 760px;
+    margin: 0 auto 10px;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 8px 12px;
+  }
+ 
+  #imagePreview img {
+    width: 42px;
+    height: 42px;
+    object-fit: cover;
+    border-radius: 6px;
+  }
+ 
+  #imagePreview span {
+    font-size: 13px;
+    color: var(--muted);
+    flex: 1;
+  }
+ 
+  #imagePreview button {
+    all: unset;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 13px;
+    padding: 4px 8px;
+  }
+ 
+  #imagePreview button:hover { color: var(--ink); }
+ 
+  form {
+    max-width: 760px;
+    margin: 0 auto;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 6px 6px 6px 10px;
+  }
+ 
+  #attachBtn {
+    background: transparent;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    flex-shrink: 0;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+ 
+  #attachBtn:hover { background: var(--paper); color: var(--ink); }
+ 
+  textarea {
+    flex: 1;
+    border: none;
+    outline: none;
+    resize: none;
+    font-family: inherit;
+    font-size: 14.5px;
+    line-height: 1.4;
+    padding: 10px 0;
+    max-height: 140px;
+    background: transparent;
+    color: var(--ink);
+  }
+ 
+  textarea::placeholder { color: #9aa098; }
+ 
+  #sendBtn {
+    align-self: flex-end;
+    background: var(--moss);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease;
+    flex-shrink: 0;
+  }
+ 
+  #sendBtn:hover { background: var(--moss-dark); }
+  #sendBtn:disabled { background: #b0b6ab; cursor: not-allowed; }
+ 
+  .hint {
+    max-width: 760px;
+    margin: 8px auto 0;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+ 
+<header>
+  <div class="title">
+    Local Chat
+    <span>Running fully offline — text + image understanding</span>
+  </div>
+  <div class="status">
+    <span class="dot"></span>
+    <span>Model loaded</span>
+  </div>
+</header>
+ 
+<main id="messages">
+  <div class="empty" id="emptyState">
+    <h2>Nothing sent yet, nothing leaves this machine</h2>
+    <p>Type a message, or attach an image and ask about it. Everything runs directly through Python — no internet, no server.</p>
+  </div>
+</main>
+ 
+<div id="imagePreview">
+  <img id="previewImg" src="" alt="">
+  <span id="previewName"></span>
+  <button type="button" id="removeImage">Remove</button>
+</div>
+ 
+<footer>
+  <form id="chatForm">
+    <button type="button" id="attachBtn" aria-label="Attach image" title="Attach image">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none">
+        <path d="M21 12.5V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="8.5" cy="9.5" r="1.5" stroke="currentColor" stroke-width="2"/>
+        <path d="M3 16l5-5a2 2 0 0 1 2.83 0L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M18 15v6M15 18h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <input type="file" id="fileInput" accept="image/*" style="display:none">
+    <textarea id="input" placeholder="Message your local model…" rows="1"></textarea>
+    <button type="submit" id="sendBtn" aria-label="Send">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="M4 12L20 4L13 20L11 13L4 12Z" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+      </svg>
+    </button>
+  </form>
+  <div class="hint">Text: phi-3-mini-4k-instruct · Vision: phi-3.5-vision-instruct</div>
+</footer>
+ 
+<script>
+const messagesEl = document.getElementById("messages");
+const emptyState = document.getElementById("emptyState");
+const form = document.getElementById("chatForm");
+const input = document.getElementById("input");
+const sendBtn = document.getElementById("sendBtn");
+const attachBtn = document.getElementById("attachBtn");
+const fileInput = document.getElementById("fileInput");
+const imagePreview = document.getElementById("imagePreview");
+const previewImg = document.getElementById("previewImg");
+const previewName = document.getElementById("previewName");
+const removeImageBtn = document.getElementById("removeImage");
+ 
+let attachedImageData = null; // data URL, e.g. "data:image/png;base64,...."
+ 
+// --- Attach image handling ---
+attachBtn.addEventListener("click", () => fileInput.click());
+ 
+fileInput.addEventListener("change", () => {
+  const file = fileInput.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    attachedImageData = reader.result;
+    previewImg.src = attachedImageData;
+    previewName.textContent = file.name;
+    imagePreview.style.display = "flex";
+  };
+  reader.readAsDataURL(file);
+});
+ 
+removeImageBtn.addEventListener("click", () => {
+  attachedImageData = null;
+  fileInput.value = "";
+  imagePreview.style.display = "none";
+});
+ 
+// Auto-resize textarea
+input.addEventListener("input", () => {
+  input.style.height = "auto";
+  input.style.height = Math.min(input.scrollHeight, 140) + "px";
+});
+ 
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    form.requestSubmit();
+  }
+});
+ 
+function addMessage(role, text, imageData) {
+  if (emptyState) emptyState.remove();
+  const wrap = document.createElement("div");
+  wrap.className = "msg " + (role === "user" ? "user" : "bot");
+  const label = document.createElement("div");
+  label.className = "label";
+  label.textContent = role === "user" ? "You" : "Assistant";
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+ 
+  if (imageData) {
+    const img = document.createElement("img");
+    img.className = "attached";
+    img.src = imageData;
+    bubble.appendChild(img);
+    if (text) {
+      const p = document.createElement("div");
+      p.textContent = text;
+      bubble.appendChild(p);
+    }
+  } else {
+    bubble.textContent = text;
+  }
+ 
+  wrap.appendChild(label);
+  wrap.appendChild(bubble);
+  messagesEl.appendChild(wrap);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+  return bubble;
+}
+ 
+function addTyping() {
+  const wrap = document.createElement("div");
+  wrap.className = "msg bot";
+  wrap.id = "typingIndicator";
+  const bubble = document.createElement("div");
+  bubble.className = "bubble typing";
+  bubble.innerHTML = "<span></span><span></span><span></span>";
+  wrap.appendChild(bubble);
+  messagesEl.appendChild(wrap);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+ 
+function removeTyping() {
+  const el = document.getElementById("typingIndicator");
+  if (el) el.remove();
+}
+ 
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const text = input.value.trim();
+  const imageToSend = attachedImageData;
+  if (!text && !imageToSend) return;
+ 
+  addMessage("user", text, imageToSend);
+ 
+  input.value = "";
+  input.style.height = "auto";
+  attachedImageData = null;
+  fileInput.value = "";
+  imagePreview.style.display = "none";
+ 
+  sendBtn.disabled = true;
+  addTyping();
+ 
+  try {
+    let reply;
+    if (imageToSend) {
+      // Goes to the vision model
+      reply = await window.pywebview.api.send_message_with_image(text, imageToSend);
+    } else {
+      // Goes to the fast text-only model
+      reply = await window.pywebview.api.send_message(text);
+    }
+    removeTyping();
+    addMessage("bot", reply);
+  } catch (err) {
+    removeTyping();
+    addMessage("bot", "Something went wrong: " + err);
+  } finally {
+    sendBtn.disabled = false;
+    input.focus();
+  }
+});
+ 
+window.addEventListener("pywebviewready", () => {
+  input.focus();
+});
+</script>
+ 
+</body>
+</html>
+ 
